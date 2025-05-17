@@ -29,23 +29,6 @@ The project envisions a transparent and censorship-resistant platform where user
 - Hardhat
 - MetaMask or compatible wallet for testing
 
-### Installation
-```bash
-npm install
-require("@nomiclabs/hardhat-ethers");
-require("dotenv").config();
-
-module.exports = {
-  solidity: "0.8.20",
-  networks: {
-    coreTestnet2: {
-      url: process.env.RPC_URL,
-      accounts: [process.env.PRIVATE_KEY]
-    }
-  }
-};
-
-
 Contract Address:0xCd252420f88cE10b5000Af6e0fb0313da2E762e1
 
 
