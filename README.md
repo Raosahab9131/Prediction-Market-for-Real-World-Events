@@ -1,32 +1,60 @@
-Prediction Market for Real-World Events
-Project Description
-A decentralized prediction market platform built on blockchain technology that allows users to create and participate in markets predicting real-world events. The platform enables users to buy shares in potential outcomes, with rewards distributed to those who correctly predict event results.
-Project Vision
-Our vision is to create a transparent, accessible, and efficient prediction market that harnesses the wisdom of crowds to provide accurate forecasting for a wide range of events. By eliminating intermediaries and using smart contracts to automate market operations, we aim to provide a trustless platform where participants from anywhere in the world can engage in prediction markets with minimal fees and maximum security.
-Key Features
+# Prediction-Market-for-Real-World-Events
 
-Market Creation: Create prediction markets for any real-world event with customizable parameters
-Share Purchase: Buy shares in "Yes" or "No" outcomes using cryptocurrency
-Oracle Resolution: Designated oracles resolve markets based on real-world outcomes
-Automated Reward Distribution: Smart contract automatically calculates and distributes rewards
-Low Fee Structure: Minimal platform fees to encourage participation
-Transparent Operations: All market data is publicly visible on the blockchain
+## Project Description
+**Prediction-Market-for-Real-World-Events** is a decentralized smart contract application built with Solidity that enables users to create and participate in prediction markets for real-world events. Using blockchain technology, the platform ensures transparency, immutability, and trustless interactions among participants.
 
-Core Smart Contract Functions
+## Project Vision
+The project envisions a transparent and censorship-resistant platform where users can forecast outcomes of future events — such as elections, sports games, or economic indicators — and stake tokens on their predictions. By crowdsourcing knowledge and leveraging financial incentives, this platform aims to produce more accurate event forecasts than traditional methods.
 
-createMarket(): Create a new prediction market with a description, end time, and designated oracle
-purchaseShares(): Buy shares in either "Yes" or "No" outcomes for a specific market
-resolveMarket(): Allow the designated oracle to resolve the market with the final outcome
-claimRewards(): Distribute rewards to users who correctly predicted the outcome
+## Key Features
+- **Create Market:** Anyone can initiate a prediction market for a specific real-world event.
+- **Place Bets:** Users can place bets on available outcomes with ETH or tokens.
+- **Resolve Market:** Only the admin or oracle can resolve the outcome and distribute winnings accordingly.
+- **Transparency & Security:** All transactions and logic are executed via smart contracts on the blockchain.
 
-Future Scope
+## Future Scope
+- Integrate a decentralized oracle (like Chainlink) for automated market resolution.
+- Add support for ERC20 tokens instead of native ETH.
+- Build a React.js front-end interface for user interaction.
+- Implement reputation systems for market creators.
+- Expand to multi-chain support (e.g., Ethereum, Polygon, Base).
 
-Integration with decentralized oracle networks like Chainlink for automated and trustless market resolution
-Implementing a governance token to allow community management of the platform
-Creating a mobile application for easier access and notifications
-Supporting conditional markets and more complex outcome scenarios
-Implementing a liquidity pool system to enhance market efficiency
-Adding support for different types of markets including scalar and categorical markets
-Cross-chain compatibility to enhance accessibility and liquidity
+---
+
+## Project Setup
+
+### Prerequisites
+- Node.js (v14+)
+- npm or yarn
+- Hardhat
+- MetaMask or compatible wallet for testing
+
+### Installation
+```bash
+npm install
+require("@nomiclabs/hardhat-ethers");
+require("dotenv").config();
+
+module.exports = {
+  solidity: "0.8.20",
+  networks: {
+    coreTestnet2: {
+      url: process.env.RPC_URL,
+      accounts: [process.env.PRIVATE_KEY]
+    }
+  }
+};
+Prediction-Market-for-Real-World-Events/
+│
+├── contracts/
+│   └── Project.sol
+├── scripts/
+│   └── deploy.js
+├── .env
+├── .gitignore
+├── package.json
+├── hardhat.config.js
+└── README.md
+
 Contract Address:0xCd252420f88cE10b5000Af6e0fb0313da2E762e1
 ![image](https://github.com/user-attachments/assets/c11c2f9c-3882-4370-8fb4-6702b1f27bfc)
