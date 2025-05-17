@@ -44,17 +44,9 @@ module.exports = {
     }
   }
 };
-Prediction-Market-for-Real-World-Events/
-│
-├── contracts/
-│   └── Project.sol
-├── scripts/
-│   └── deploy.js
-├── .env
-├── .gitignore
-├── package.json
-├── hardhat.config.js
-└── README.md
+
 
 Contract Address:0xCd252420f88cE10b5000Af6e0fb0313da2E762e1
+
+
 ![image](https://github.com/user-attachments/assets/c11c2f9c-3882-4370-8fb4-6702b1f27bfc)
