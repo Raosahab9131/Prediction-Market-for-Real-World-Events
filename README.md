@@ -32,6 +32,6 @@ The project envisions a transparent and censorship-resistant platform where user
 Contract Address:0xCd252420f88cE10b5000Af6e0fb0313da2E762e1
 
 
-![444497466-c11c2f9c-3882-4370-8fb4-6702b1f27bfc](https://github.com/user-attachments/assets/fc7bcf40-6657-424d-82a7-a310d565b5b0)
+![Screenshot 2025-05-18 161314](https://github.com/user-attachments/assets/9836c148-cf91-4198-b180-9223ef1aca6c)
 
 
