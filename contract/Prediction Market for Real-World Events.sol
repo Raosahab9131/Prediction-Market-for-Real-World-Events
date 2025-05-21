@@ -45,15 +45,15 @@ contract PredictionMarket {
         require(oracle != address(0), "Invalid oracle address");
 
         uint256 marketId = marketCount;
-        
+
         Market storage market = markets[marketId];
         market.description = description;
         market.endTime = endTime;
         market.oracle = oracle;
         market.resolved = false;
-        
+
         marketCount++;
-        
+
         emit MarketCreated(marketId, description, endTime, oracle);
     }
 
@@ -64,14 +64,14 @@ contract PredictionMarket {
      */
     function purchaseShares(uint256 marketId, bool isYes) public payable {
         Market storage market = markets[marketId];
-        
+
         require(!market.resolved, "Market already resolved");
         require(block.timestamp < market.endTime, "Market closed for betting");
         require(msg.value > 0, "Must send ETH to purchase shares");
-        
+
         uint256 feeAmount = (msg.value * fee) / 100;
         uint256 stakeAmount = msg.value - feeAmount;
-        
+
         if (isYes) {
             uint256 shares = calculateShares(stakeAmount, market.totalYesStaked, market.totalYesShares);
             market.yesShares[msg.sender] += shares;
@@ -83,10 +83,10 @@ contract PredictionMarket {
             market.totalNoShares += shares;
             market.totalNoStaked += stakeAmount;
         }
-        
+
         // Transfer fee to contract owner
         payable(owner).transfer(feeAmount);
-        
+
         emit SharesPurchased(marketId, msg.sender, isYes, stakeAmount);
     }
 
@@ -97,14 +97,14 @@ contract PredictionMarket {
      */
     function resolveMarket(uint256 marketId, bool outcome) public {
         Market storage market = markets[marketId];
-        
+
         require(msg.sender == market.oracle, "Only oracle can resolve");
         require(!market.resolved, "Market already resolved");
         require(block.timestamp >= market.endTime, "Market not yet closed");
-        
+
         market.resolved = true;
         market.outcome = outcome;
-        
+
         emit MarketResolved(marketId, outcome);
     }
 
@@ -114,12 +114,12 @@ contract PredictionMarket {
      */
     function claimRewards(uint256 marketId) public {
         Market storage market = markets[marketId];
-        
+
         require(market.resolved, "Market not resolved yet");
-        
+
         uint256 winningShares;
         uint256 reward = 0;
-        
+
         if (market.outcome) {
             // Yes was correct
             winningShares = market.yesShares[msg.sender];
@@ -135,12 +135,25 @@ contract PredictionMarket {
                 market.noShares[msg.sender] = 0;
             }
         }
-        
+
         require(reward > 0, "No rewards to claim");
-        
+
         payable(msg.sender).transfer(reward);
-        
+
         emit RewardsClaimed(marketId, msg.sender, reward);
+    }
+
+    /**
+     * @dev Get the number of Yes and No shares a user holds in a specific market
+     * @param marketId The ID of the market
+     * @param user The address of the user
+     * @return yesShares Number of Yes shares held
+     * @return noShares Number of No shares held
+     */
+    function getUserShares(uint256 marketId, address user) public view returns (uint256 yesShares, uint256 noShares) {
+        Market storage market = markets[marketId];
+        yesShares = market.yesShares[user];
+        noShares = market.noShares[user];
     }
 
     // Helper function to calculate shares based on stake amount
