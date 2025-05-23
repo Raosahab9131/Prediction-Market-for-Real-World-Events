@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-/**
- * @title KYCVerification + PredictionMarket Integrated Contract
- * @dev Combines KYC verification and prediction market functionality.
- */
 contract KYCVerifiedPredictionMarket {
-    // KYC Part
-
     address public owner;
 
     enum VerificationStatus { Unverified, Pending, Verified, Rejected }
@@ -23,13 +17,9 @@ contract KYCVerifiedPredictionMarket {
 
     mapping(address => Customer) public customers;
     mapping(address => bool) public verifiers;
-
     address[] private customerAddresses;
-
     uint256 public customerCount;
     uint256 public verifierCount;
-
-    // Prediction Market Part
 
     struct Market {
         string description;
@@ -43,13 +33,13 @@ contract KYCVerifiedPredictionMarket {
         uint256 totalNoStaked;
         mapping(address => uint256) yesShares;
         mapping(address => uint256) noShares;
+        mapping(address => bool) rewardsClaimed;
     }
 
     mapping(uint256 => Market) public markets;
     uint256 public marketCount;
     uint256 public fee = 1; // 1% fee
 
-    // Events KYC
     event CustomerRegistered(address indexed customerAddress, string customerName);
     event KYCVerified(address indexed customerAddress, address indexed verifier);
     event KYCRejected(address indexed customerAddress, address indexed verifier, string reason);
@@ -58,25 +48,23 @@ contract KYCVerifiedPredictionMarket {
     event KYCResubmitted(address indexed customerAddress, string newHash);
     event CustomerNameChanged(address indexed customerAddress, string newName);
 
-    // Events Prediction Market
     event MarketCreated(uint256 indexed marketId, string description, uint256 endTime, address oracle);
     event SharesPurchased(uint256 indexed marketId, address indexed buyer, bool isYes, uint256 amount);
     event MarketResolved(uint256 indexed marketId, bool outcome);
     event RewardsClaimed(uint256 indexed marketId, address indexed user, uint256 amount);
 
-    // Modifiers
     modifier onlyOwner() {
-        require(msg.sender == owner, "Only owner can call this function");
+        require(msg.sender == owner, "Only owner");
         _;
     }
 
     modifier onlyVerifier() {
-        require(verifiers[msg.sender] || msg.sender == owner, "Only verifiers can call this function");
+        require(verifiers[msg.sender] || msg.sender == owner, "Only verifier");
         _;
     }
 
     modifier onlyVerifiedCustomer() {
-        require(customers[msg.sender].status == VerificationStatus.Verified, "KYC not verified");
+        require(customers[msg.sender].status == VerificationStatus.Verified, "Not verified");
         _;
     }
 
@@ -86,96 +74,54 @@ contract KYCVerifiedPredictionMarket {
         verifierCount = 1;
     }
 
-    // ========== KYC Functions ==========
-
-    function registerCustomer(string memory _customerName, string memory _customerDataHash) public {
-        require(customers[msg.sender].customerAddress == address(0), "Customer already registered");
-
-        customers[msg.sender] = Customer({
-            customerAddress: msg.sender,
-            customerName: _customerName,
-            customerDataHash: _customerDataHash,
-            status: VerificationStatus.Pending,
-            verificationTimestamp: 0,
-            rejectionReason: ""
-        });
-
+    // ========== KYC ==========
+    function registerCustomer(string memory _name, string memory _hash) public {
+        require(customers[msg.sender].customerAddress == address(0), "Already registered");
+        customers[msg.sender] = Customer(msg.sender, _name, _hash, VerificationStatus.Pending, 0, "");
         customerAddresses.push(msg.sender);
         customerCount++;
-        emit CustomerRegistered(msg.sender, _customerName);
+        emit CustomerRegistered(msg.sender, _name);
     }
 
-    function verifyCustomer(address _customerAddress) public onlyVerifier {
-        require(customers[_customerAddress].customerAddress != address(0), "Customer not registered");
-        require(customers[_customerAddress].status == VerificationStatus.Pending, "Not in pending state");
-
-        customers[_customerAddress].status = VerificationStatus.Verified;
-        customers[_customerAddress].verificationTimestamp = block.timestamp;
-
-        emit KYCVerified(_customerAddress, msg.sender);
+    function verifyCustomer(address _addr) public onlyVerifier {
+        require(customers[_addr].status == VerificationStatus.Pending, "Not pending");
+        customers[_addr].status = VerificationStatus.Verified;
+        customers[_addr].verificationTimestamp = block.timestamp;
+        emit KYCVerified(_addr, msg.sender);
     }
 
-    function rejectCustomer(address _customerAddress, string memory _reason) public onlyVerifier {
-        require(customers[_customerAddress].customerAddress != address(0), "Customer not registered");
-        require(customers[_customerAddress].status == VerificationStatus.Pending, "Not in pending state");
-
-        customers[_customerAddress].status = VerificationStatus.Rejected;
-        customers[_customerAddress].rejectionReason = _reason;
-
-        emit KYCRejected(_customerAddress, msg.sender, _reason);
+    function rejectCustomer(address _addr, string memory _reason) public onlyVerifier {
+        require(customers[_addr].status == VerificationStatus.Pending, "Not pending");
+        customers[_addr].status = VerificationStatus.Rejected;
+        customers[_addr].rejectionReason = _reason;
+        emit KYCRejected(_addr, msg.sender, _reason);
     }
 
-    function addVerifier(address _verifierAddress) public onlyOwner {
-        require(!verifiers[_verifierAddress], "Already a verifier");
-
-        verifiers[_verifierAddress] = true;
+    function addVerifier(address _addr) public onlyOwner {
+        require(!verifiers[_addr], "Already verifier");
+        verifiers[_addr] = true;
         verifierCount++;
-
-        emit VerifierAdded(_verifierAddress);
+        emit VerifierAdded(_addr);
     }
 
-    function removeVerifier(address _verifierAddress) public onlyOwner {
-        require(verifiers[_verifierAddress], "Not a verifier");
-        require(_verifierAddress != owner, "Cannot remove owner");
-
-        verifiers[_verifierAddress] = false;
+    function removeVerifier(address _addr) public onlyOwner {
+        require(verifiers[_addr], "Not a verifier");
+        require(_addr != owner, "Owner cannot be removed");
+        verifiers[_addr] = false;
         verifierCount--;
-
-        emit VerifierRemoved(_verifierAddress);
-    }
-
-    function getCustomerStatus(address _customerAddress) public view returns (VerificationStatus) {
-        require(customers[_customerAddress].customerAddress != address(0), "Customer not registered");
-        return customers[_customerAddress].status;
-    }
-
-    function getCustomerDetails(address _customerAddress) public view returns (
-        string memory name,
-        string memory dataHash,
-        VerificationStatus status,
-        uint256 timestamp,
-        string memory reason
-    ) {
-        Customer memory c = customers[_customerAddress];
-        require(c.customerAddress != address(0), "Customer not registered");
-        return (c.customerName, c.customerDataHash, c.status, c.verificationTimestamp, c.rejectionReason);
+        emit VerifierRemoved(_addr);
     }
 
     function resubmitKYC(string memory _newHash) public {
-        require(customers[msg.sender].customerAddress != address(0), "Customer not registered");
-        require(customers[msg.sender].status == VerificationStatus.Rejected, "KYC not rejected");
-
+        require(customers[msg.sender].status == VerificationStatus.Rejected, "Not rejected");
         customers[msg.sender].customerDataHash = _newHash;
         customers[msg.sender].status = VerificationStatus.Pending;
         customers[msg.sender].rejectionReason = "";
-
         emit KYCResubmitted(msg.sender, _newHash);
     }
 
     function changeCustomerName(string memory _newName) public {
-        require(customers[msg.sender].customerAddress != address(0), "Customer not registered");
-        require(customers[msg.sender].status == VerificationStatus.Pending, "Can only change during pending");
-
+        require(customers[msg.sender].status == VerificationStatus.Pending, "Only in pending");
         customers[msg.sender].customerName = _newName;
         emit CustomerNameChanged(msg.sender, _newName);
     }
@@ -184,80 +130,75 @@ contract KYCVerifiedPredictionMarket {
         return customerAddresses;
     }
 
-    function isVerifier(address _addr) public view returns (bool) {
-        return verifiers[_addr];
+    // ========== Prediction Market ==========
+
+    function createMarket(string memory _desc, uint256 _endTime, address _oracle) public onlyOwner {
+        require(_endTime > block.timestamp, "Invalid endTime");
+        uint256 id = marketCount++;
+        Market storage m = markets[id];
+        m.description = _desc;
+        m.endTime = _endTime;
+        m.oracle = _oracle;
+        emit MarketCreated(id, _desc, _endTime, _oracle);
     }
 
-    // ========== Prediction Market Functions ==========
-
-    function createMarket(string memory description, uint256 endTime, address oracle) public onlyOwner {
-        require(endTime > block.timestamp, "End time must be in the future");
-        require(oracle != address(0), "Invalid oracle address");
-
-        uint256 marketId = marketCount;
-
-        Market storage market = markets[marketId];
-        market.description = description;
-        market.endTime = endTime;
-        market.oracle = oracle;
-        market.resolved = false;
-
-        marketCount++;
-
-        emit MarketCreated(marketId, description, endTime, oracle);
+    function calculateShares(uint256 amount, uint256 totalStaked, uint256 totalShares) internal pure returns (uint256) {
+        if (totalShares == 0 || totalStaked == 0) return amount;
+        return (amount * totalShares) / totalStaked;
     }
 
-    function purchaseShares(uint256 marketId, bool isYes) public payable onlyVerifiedCustomer {
-        Market storage market = markets[marketId];
+    function purchaseShares(uint256 id, bool isYes) public payable onlyVerifiedCustomer {
+        Market storage m = markets[id];
+        require(block.timestamp < m.endTime, "Market closed");
+        require(!m.resolved, "Already resolved");
+        require(msg.value > 0, "No ETH");
 
-        require(!market.resolved, "Market already resolved");
-        require(block.timestamp < market.endTime, "Market closed for betting");
-        require(msg.value > 0, "Must send ETH to purchase shares");
-
-        uint256 feeAmount = (msg.value * fee) / 100;
-        uint256 stakeAmount = msg.value - feeAmount;
+        uint256 feeAmt = (msg.value * fee) / 100;
+        uint256 stake = msg.value - feeAmt;
 
         if (isYes) {
-            uint256 shares = calculateShares(stakeAmount, market.totalYesStaked, market.totalYesShares);
-            market.yesShares[msg.sender] += shares;
-            market.totalYesShares += shares;
-            market.totalYesStaked += stakeAmount;
+            uint256 shares = calculateShares(stake, m.totalYesStaked, m.totalYesShares);
+            m.yesShares[msg.sender] += shares;
+            m.totalYesShares += shares;
+            m.totalYesStaked += stake;
         } else {
-            uint256 shares = calculateShares(stakeAmount, market.totalNoStaked, market.totalNoShares);
-            market.noShares[msg.sender] += shares;
-            market.totalNoShares += shares;
-            market.totalNoStaked += stakeAmount;
+            uint256 shares = calculateShares(stake, m.totalNoStaked, m.totalNoShares);
+            m.noShares[msg.sender] += shares;
+            m.totalNoShares += shares;
+            m.totalNoStaked += stake;
         }
 
-        // Transfer fee to contract owner
-        payable(owner).transfer(feeAmount);
-
-        emit SharesPurchased(marketId, msg.sender, isYes, stakeAmount);
+        payable(owner).transfer(feeAmt);
+        emit SharesPurchased(id, msg.sender, isYes, stake);
     }
 
-    function resolveMarket(uint256 marketId, bool outcome) public {
-        Market storage market = markets[marketId];
+    function resolveMarket(uint256 id, bool outcome) public {
+        Market storage m = markets[id];
+        require(msg.sender == m.oracle, "Only oracle");
+        require(!m.resolved, "Already resolved");
+        require(block.timestamp >= m.endTime, "Not ended");
 
-        require(msg.sender == market.oracle, "Only oracle can resolve");
-        require(!market.resolved, "Market already resolved");
-        require(block.timestamp >= market.endTime, "Market not yet closed");
+        m.resolved = true;
+        m.outcome = outcome;
 
-        market.resolved = true;
-        market.outcome = outcome;
-
-        emit MarketResolved(marketId, outcome);
+        emit MarketResolved(id, outcome);
     }
 
-    function claimRewards(uint256 marketId) public onlyVerifiedCustomer {
-        Market storage market = markets[marketId];
+    function claimRewards(uint256 id) public onlyVerifiedCustomer {
+        Market storage m = markets[id];
+        require(m.resolved, "Not resolved");
+        require(!m.rewardsClaimed[msg.sender], "Already claimed");
 
-        require(market.resolved, "Market not resolved yet");
+        uint256 userShares = m.outcome ? m.yesShares[msg.sender] : m.noShares[msg.sender];
+        uint256 totalWinningShares = m.outcome ? m.totalYesShares : m.totalNoShares;
+        uint256 rewardPool = m.totalYesStaked + m.totalNoStaked;
 
-        uint256 winningShares;
-        uint256 reward = 0;
+        require(userShares > 0, "No winning shares");
 
-        if (market.outcome) {
-            // Yes was correct
-            winningShares = market.yesShares[msg.sender];
-            if (winningShares > 0 && market.totalYesShares > 0) {
-                reward = (winningShares * (market.totalYesStaked + market.totalNoStaked)) / market.totalYesShares
+        uint256 reward = (userShares * rewardPool) / totalWinningShares;
+        m.rewardsClaimed[msg.sender] = true;
+
+        payable(msg.sender).transfer(reward);
+        emit RewardsClaimed(id, msg.sender, reward);
+    }
+}
