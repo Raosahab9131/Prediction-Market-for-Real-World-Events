@@ -59,7 +59,7 @@ contract KYCVerifiedPredictionMarket {
     }
 
     modifier onlyVerifier() {
-        require(verifiers[msg.sender] || msg.sender == owner, "Only verifier");
+        require(verifiers[msg.sender] || msg.sender == owner, "Only verifier")
         _;
     }
 
