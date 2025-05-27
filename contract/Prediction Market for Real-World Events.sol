@@ -12,7 +12,7 @@ contract KYCVerifiedPredictionMarket {
         string customerDataHash;
         VerificationStatus status;
         uint256 verificationTimestamp;
-        string rejectionReason;\
+        string rejectionReason;
     }
 
     mapping(address => Customer) public customers;
@@ -43,15 +43,16 @@ contract KYCVerifiedPredictionMarket {
     event CustomerRegistered(address indexed customerAddress, string customerName);
     event KYCVerified(address indexed customerAddress, address indexed verifier);
     event KYCRejected(address indexed customerAddress, address indexed verifier, string reason);
-    event VerifierAdded(address indexed verifier)7;
+    event VerifierAdded(address indexed verifier);
     event VerifierRemoved(address indexed verifier);
     event KYCResubmitted(address indexed customerAddress, string newHash);
     event CustomerNameChanged(address indexed customerAddress, string newName);
-
     event MarketCreated(uint256 indexed marketId, string description, uint256 endTime, address oracle);
     event SharesPurchased(uint256 indexed marketId, address indexed buyer, bool isYes, uint256 amount);
     event MarketResolved(uint256 indexed marketId, bool outcome);
     event RewardsClaimed(uint256 indexed marketId, address indexed user, uint256 amount);
+    event OracleUpdated(uint256 indexed marketId, address newOracle);
+    event FeeUpdated(uint256 newFee);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner");
@@ -59,7 +60,7 @@ contract KYCVerifiedPredictionMarket {
     }
 
     modifier onlyVerifier() {
-        require(verifiers[msg.sender] || msg.sender == owner, "Only verifier")
+        require(verifiers[msg.sender] || msg.sender == owner, "Only verifier");
         _;
     }
 
@@ -130,6 +131,23 @@ contract KYCVerifiedPredictionMarket {
         return customerAddresses;
     }
 
+    function getCustomerDetails(address user) public view returns (
+        string memory name,
+        string memory dataHash,
+        VerificationStatus status,
+        uint256 timestamp,
+        string memory reason
+    ) {
+        Customer storage c = customers[user];
+        return (
+            c.customerName,
+            c.customerDataHash,
+            c.status,
+            c.verificationTimestamp,
+            c.rejectionReason
+        );
+    }
+
     // ========== Prediction Market ==========
 
     function createMarket(string memory _desc, uint256 _endTime, address _oracle) public onlyOwner {
@@ -140,6 +158,13 @@ contract KYCVerifiedPredictionMarket {
         m.endTime = _endTime;
         m.oracle = _oracle;
         emit MarketCreated(id, _desc, _endTime, _oracle);
+    }
+
+    function updateOracle(uint256 id, address newOracle) public onlyOwner {
+        Market storage m = markets[id];
+        require(!m.resolved, "Already resolved");
+        m.oracle = newOracle;
+        emit OracleUpdated(id, newOracle);
     }
 
     function calculateShares(uint256 amount, uint256 totalStaked, uint256 totalShares) internal pure returns (uint256) {
@@ -200,5 +225,45 @@ contract KYCVerifiedPredictionMarket {
 
         payable(msg.sender).transfer(reward);
         emit RewardsClaimed(id, msg.sender, reward);
+    }
+
+    function getMarketDetails(uint256 id) public view returns (
+        string memory description,
+        uint256 endTime,
+        bool resolved,
+        bool outcome,
+        address oracle,
+        uint256 totalYesStaked,
+        uint256 totalNoStaked,
+        uint256 totalYesShares,
+        uint256 totalNoShares
+    ) {
+        Market storage m = markets[id];
+        return (
+            m.description,
+            m.endTime,
+            m.resolved,
+            m.outcome,
+            m.oracle,
+            m.totalYesStaked,
+            m.totalNoStaked,
+            m.totalYesShares,
+            m.totalNoShares
+        );
+    }
+
+    function getUserShares(uint256 id, address user) public view returns (uint256 yesShares, uint256 noShares) {
+        Market storage m = markets[id];
+        return (m.yesShares[user], m.noShares[user]);
+    }
+
+    function changeFee(uint256 newFee) public onlyOwner {
+        require(newFee <= 10, "Fee too high");
+        fee = newFee;
+        emit FeeUpdated(newFee);
+    }
+
+    function getContractBalance() public view returns (uint256) {
+        return address(this).balance;
     }
 }
