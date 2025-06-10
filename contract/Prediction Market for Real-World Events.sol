@@ -8,7 +8,7 @@ contract KYCVerifiedPredictionMarket {
 
     struct Customer {
         address customerAddress;
-        string customerName;
+        string customerName
         string customerDataHash;
         VerificationStatus status;
         uint256 verificationTimestamp;
