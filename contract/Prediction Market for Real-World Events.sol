@@ -20,7 +20,7 @@ contract KYCVerifiedPredictionMarket {
         address oracle;
     }
 
-    struct Market {
+    struct Marke
         string description;
         uint256 endTime;
         bool resolved;
