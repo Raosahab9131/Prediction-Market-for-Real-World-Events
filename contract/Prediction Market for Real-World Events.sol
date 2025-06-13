@@ -83,7 +83,12 @@ contract KYCVerifiedPredictionMarket {
         _;
     }
 
-    constructor() {
+    construct
+    modifier onlyVerifiedCustomer() {
+        require(customers[msg.sender].status == VerificationStatus.Verified, "Not verified");
+        require(!blacklisted[msg.sender], "Blacklisted");
+        _;
+    }or() {
         owner = msg.sender;
         verifiers[msg.sender] = true;
         verifierCount = 1;
