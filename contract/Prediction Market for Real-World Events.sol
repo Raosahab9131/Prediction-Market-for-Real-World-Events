@@ -1,9 +1,5 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
-
-contract KYCVerifiedPredictionMarket {
-    address public owner;
-
     enum VerificationStatus { Unverified, Pending, Verified, Rejected }
 
     struct Customer {
