@@ -11,7 +11,6 @@ pragma solidity ^0.8.17;
     }
 
     struct MarketOracleHistory {
-        uint256 timestamp;
         address oracle;
     }
 
