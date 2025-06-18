@@ -15,7 +15,7 @@ pragma solidity ^0.8.17;
     }
 
     struct Marke
-        string description;
+        string descr
         uint256 endTime;
         bool resolved;
         bool outcome;
