@@ -50,17 +50,7 @@ pragma solidity ^0.8.17;
     event VerifierAdded(address indexed verifier);
     event VerifierRemoved(address indexed verifier);
     event KYCResubmitted(address indexed customerAddress, string newHash);
-    event CustomerNameChanged(address indexed customerAddress, string newName);
-    event CustomerBlacklisted(address indexed customerAddress);
-    event CustomerUnblacklisted(address indexed customerAddress);
-    event MarketCreated(uint256 indexed marketId, string description, uint256 endTime, address oracle);
-    event SharesPurchased(uint256 indexed marketId, address indexed buyer, bool isYes, uint256 amount);
-    event MarketResolved(uint256 indexed marketId, bool outcome);
-    event RewardsClaimed(uint256 indexed marketId, address indexed user, uint256 amount);
-    event RefundClaimed(uint256 indexed marketId, address indexed user, uint256 amount);
-    event OracleUpdated(uint256 indexed marketId, address newOracle);
-    event FeeUpdated(uint256 newFee);
-
+ 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner");
         _;
