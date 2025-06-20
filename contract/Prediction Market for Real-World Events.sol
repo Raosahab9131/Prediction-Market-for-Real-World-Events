@@ -7,9 +7,7 @@ pragma solidity ^0.8.17;
         string customerDataHash;
         VerificationStatus status;
         uint256 verificationTimestamp;
-        string rejectionReason;
-    }
-
+        string
     struct MarketOracleHistory {
         address oracle;
     }
