@@ -88,12 +88,6 @@ pragma solidity ^0.8.17;
         emit KYCStatusChanged(msg.sender, VerificationStatus.Pending);
     }
 
-    function verifyCustomer(address _addr) public onlyVerifier {
-        require(customers[_addr].status == VerificationStatus.Pending, "Not pending");
-        customers[_addr].status = VerificationStatus.Verified;
-        customers[_addr].verificationTimestamp = block.timestamp;
-        emit KYCVerified(_addr, msg.sender);
-        emit KYCStatusChanged(_addr, VerificationStatus.Verified);
     }
 
     function rejectCustomer(address _addr, string memory _reason) public onlyVerifier {
